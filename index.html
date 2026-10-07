@@ -76,6 +76,8 @@
       margin-left: auto;
     }
     .nav-btn {
+      display: inline-flex;
+      align-items: center;
       border: 1px solid var(--ext-ink);
       background: var(--ext-ink);
       color: #faf4e6;
@@ -83,6 +85,8 @@
       padding: 8px 12px;
       font: inherit;
       font-size: 13px;
+      line-height: 1.4;
+      text-decoration: none;
       cursor: pointer;
       white-space: nowrap;
     }
@@ -487,10 +491,12 @@
       border: 0;
       background: #ece3cc;
     }
+    .cta-links { margin-top: 8px; font-size: 14px; }
     .toast {
       position: fixed;
       z-index: 30;
-      max-width: min(360px, calc(100vw - 32px));
+      max-width: min(420px, calc(100vw - 32px));
+      overflow-wrap: anywhere;
       background: var(--sheet);
       color: var(--ink);
       padding: 12px 16px;
@@ -520,8 +526,8 @@
   <nav>
     <div class="logo"><img src="icon/main_logo.png" alt="" />Page2Reading</div>
     <div class="nav-actions">
-      <button class="nav-btn ghost" type="button" data-download data-toast="马上就来！">安装 Skill</button>
-      <button class="nav-btn" type="button" data-download data-toast="哎呀，目前还未开放，作者慢马加鞭中，敬请期待...">下载 Chrome 扩展</button>
+      <button class="nav-btn ghost" type="button" id="installSkill">安装 Skill</button>
+      <a class="nav-btn" href="https://github.com/unarelax/page2reading/releases/latest/download/Page2Reading.zip">下载 Chrome 扩展</a>
     </div>
   </nav>
 
@@ -648,6 +654,11 @@
       <img src="images/author.png" alt="作者 yuri" />
     </div>
     <p>联系作者（yuri）：<a href="mailto:1048680895@qq.com">1048680895@qq.com</a></p>
+    <p class="cta-links">
+      <a href="https://github.com/unarelax/page2reading" target="_blank" rel="noopener">扩展 GitHub</a>
+      ·
+      <a href="https://github.com/unarelax/page2reading_skill" target="_blank" rel="noopener">Skill GitHub</a>
+    </p>
   </div>
 
   <div class="modal" id="modal" onclick="closeOutside(event)">
@@ -662,7 +673,7 @@
     </div>
   </div>
 
-  <div class="toast" id="toast" role="status">哎呀，目前还未开放，作者慢马加鞭中，敬请期待...</div>
+  <div class="toast" id="toast" role="status"></div>
 
   <script>
     const pdfs = {
@@ -688,12 +699,12 @@
     });
 
     const toast = document.getElementById("toast");
+    const SKILL_CMD = "npx skills add unarelax/page2reading_skill -a claude-code codex cursor";
     let toastTimer;
-    function sayLocal(btn) {
+    function sayLocal(btn, message) {
       const rect = btn.getBoundingClientRect();
       const pad = 12;
-      const message = btn.getAttribute("data-toast");
-      if (message) toast.textContent = message;
+      toast.textContent = message;
       toast.classList.add("show");
       const tw = toast.offsetWidth;
       const th = toast.offsetHeight;
@@ -706,8 +717,24 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
     }
-    document.querySelectorAll("[data-download]").forEach((btn) => {
-      btn.addEventListener("click", () => sayLocal(btn));
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const t = document.createElement("textarea");
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        const ok = document.execCommand("copy");
+        t.remove();
+        return ok;
+      }
+    }
+    document.getElementById("installSkill").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const ok = await copyText(SKILL_CMD);
+      sayLocal(btn, ok ? "已复制安装命令" : SKILL_CMD);
     });
     document.querySelectorAll("[data-copy]").forEach((btn) => {
       btn.addEventListener("click", async () => {
